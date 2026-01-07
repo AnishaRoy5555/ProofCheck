@@ -99,7 +99,7 @@ proof-check/
 ### Manual VPS
 ```bash
 npm install --production
-PORT=3000 node server.js
+PORT=3001 node server.js
 ```
 
 ## Extending
