@@ -5,8 +5,7 @@ A system that quantifies developer skill directly from code, replacing resumes a
 Unlike linters or CI tools that operate file-by-file, ProofCheck evaluates repositories holistically, combining architecture, testing discipline, language idioms, and maintainability into a unified assessment.
 
 ## Architecture
-
-![ProofCheck Architecture](./ProofCheck_Flowchart.png)
+<img width="1280" height="720" alt="ProofCheck_Flowchart" src="https://github.com/user-attachments/assets/6da1e079-ea7f-4549-8e5e-b6f4912ee798" />
 
 ## What it Does
 
