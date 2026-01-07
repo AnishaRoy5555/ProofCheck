@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proof Code Verifier - GitHub Repository Analyzer</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent: #262670;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --border: #30363d;
+	    --proof-color: #3C40C9;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { font-size: 4rem; font-weight: 700; margin-bottom: 10px; font-family: 'Playfair Display', serif; }
+        h1 em { color: var(--proof-color); font-style: italic; }
+        .tagline { color: var(--text-secondary); font-size: 1.7rem; }
+        .input-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .input-wrapper { display: flex; gap: 12px; }
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 18px;
+            font-size: 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            outline: none;
+        }
+        input[type="text"]:focus { border-color: var(--accent); }
+        input[type="text"]::placeholder { color: var(--text-secondary); }
+        button {
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            background: var(--accent);
+            color: #BABCD1;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .loading { display: none; text-align: center; padding: 60px 20px; }
+        .loading.active { display: block; }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: var(--text-secondary); }
+        .results { display: none; }
+        .results.active { display: block; }
+        .score-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .grade { font-size: 4rem; font-weight: 700; line-height: 1; margin-bottom: 10px; }
+        .grade.A { color: var(--accent-green); }
+        .grade.B { color: #56d364; }
+        .grade.C { color: var(--accent-yellow); }
+        .grade.D { color: #db6d28; }
+        .grade.F { color: var(--accent-red); }
+        .score-number { font-size: 1.5rem; color: var(--text-secondary); margin-bottom: 15px; }
+        .summary { color: var(--text-secondary); max-width: 600px; margin: 0 auto; }
+        .section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .metric { background: var(--bg-tertiary); padding: 16px; border-radius: 8px; }
+        .metric-label { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 4px; }
+        .metric-value { font-size: 1.4rem; font-weight: 600; }
+        .metric-value.good { color: var(--accent-green); }
+        .metric-value.warning { color: var(--accent-yellow); }
+        .metric-value.bad { color: var(--accent-red); }
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag { background: var(--bg-tertiary); padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; }
+        .tag.good { background: rgba(63, 185, 80, 0.15); color: var(--accent-green); }
+        .tag.warning { background: rgba(210, 153, 34, 0.15); color: var(--accent-yellow); }
+        .language-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 16px; }
+        .language-legend { display: flex; flex-wrap: wrap; gap: 16px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
+        .issues-list { list-style: none; }
+        .issue-item {
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .issue-severity {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .issue-severity.high { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+        .issue-severity.medium { background: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
+        .issue-severity.low { background: rgba(139, 148, 158, 0.2); color: var(--text-secondary); }
+        .issue-content { flex: 1; }
+        .issue-file { color: var(--text-secondary); font-size: 0.85rem; }
+        .error-message {
+            background: rgba(248, 81, 73, 0.1);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .error-message.active { display: block; }
+        .repo-link { color: var(--accent); text-decoration: none; word-break: break-all; }
+        .repo-link:hover { text-decoration: underline; }
+        footer { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+        @media (max-width: 600px) {
+            .input-wrapper { flex-direction: column; }
+            h1 { font-size: 2rem; }
+            .grade { font-size: 3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><em>Proof</h1>
+            <p class="tagline">Your Work is Your Worth.</p>
+        </header>
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input type="text" id="repoUrl" placeholder="https://github.com/username/repository">
+                <button id="analyzeBtn" onclick="analyzeRepo()">Analyze</button>
+            </div>
+        </div>
+        <div class="error-message" id="errorMessage"></div>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text" id="loadingText">Cloning repository...</p>
+        </div>
+        <div class="results" id="results">
+            <div class="score-card">
+                <div class="grade" id="grade">A</div>
+                <div class="score-number"><span id="score">85</span>/100</div>
+                <p class="summary" id="summary"></p>
+                <p style="margin-top: 15px; font-size: 0.9rem;">
+                    <a class="repo-link" id="repoLink" href="#" target="_blank"></a>
+                </p>
+            </div>
+            <div class="section">
+                <h2 class="section-title"><span>💪</span> Strengths</h2>
+                <div class="tags" id="strengths"></div>
+            </div>
+            <div class="section">
+                <h2 class="section-title"><span>🎯</span> Areas for Improvement</h2>
+                <div class="tags" id="improvements"></div>
+            </div>
+            <div class="section">
+                <h2 class="section-title"><span>📊</span> Languages</h2>
+                <div class="language-bar" id="languageBar"></div>
+                <div class="language-legend" id="languageLegend"></div>
+            </div>
+            <div class="section">
+                <h2 class="section-title"><span>📁</span> Project Quality</h2>
+                <div class="grid" id="projectMetrics"></div>
+            </div>
+            <div class="section" id="codeAnalysisSection">
+                <h2 class="section-title"><span>🔍</span> Code Analysis</h2>
+                <div id="codeAnalysis"></div>
+            </div>
+            <div class="section" id="issuesSection">
+                <h2 class="section-title"><span>⚠️</span> Issues Found</h2>
+                <ul class="issues-list" id="issuesList"></ul>
+            </div>
+        </div>
+    </div>
+    <footer><p>Let Your Work Speak for You</p></footer>
+    <script>
+        const LANGUAGE_COLORS = {
+            'Python': '#3572A5', 'JavaScript': '#f1e05a', 'TypeScript': '#2b7489',
+            'C++': '#f34b7d', 'C': '#555555', 'Java': '#b07219', 'Go': '#00ADD8',
+            'Rust': '#dea584', 'HTML': '#e34c26', 'CSS': '#563d7c', 'Shell': '#89e051'
+        };
+        const loadingMessages = ['Cloning repository...', 'Detecting languages...', 'Analyzing project structure...', 'Running code analyzers...', 'Calculating scores...'];
+        let loadingInterval;
+
+        async function analyzeRepo() {
+            const input = document.getElementById('repoUrl');
+            const btn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const error = document.getElementById('errorMessage');
+            const repoUrl = input.value.trim();
+            
+            if (!repoUrl) { showError('Please enter a GitHub repository URL'); return; }
+            error.classList.remove('active');
+            results.classList.remove('active');
+            loading.classList.add('active');
+            btn.disabled = true;
+
+            let msgIndex = 0;
+            const loadingText = document.getElementById('loadingText');
+            loadingText.textContent = loadingMessages[0];
+            loadingInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % loadingMessages.length;
+                loadingText.textContent = loadingMessages[msgIndex];
+            }, 2000);
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ repoUrl })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Analysis failed');
+                displayResults(data);
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                clearInterval(loadingInterval);
+                loading.classList.remove('active');
+                btn.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            const error = document.getElementById('errorMessage');
+            error.textContent = message;
+            error.classList.add('active');
+        }
+
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            document.getElementById('grade').textContent = data.grade;
+            document.getElementById('grade').className = 'grade ' + data.grade[0];
+            document.getElementById('score').textContent = data.overallScore;
+            document.getElementById('summary').textContent = data.summary;
+            document.getElementById('repoLink').textContent = data.repoUrl;
+            document.getElementById('repoLink').href = data.repoUrl;
+            document.getElementById('strengths').innerHTML = data.strengths.map(s => `<span class="tag good">✓ ${s}</span>`).join('');
+            document.getElementById('improvements').innerHTML = data.improvements.map(i => `<span class="tag warning">→ ${i}</span>`).join('');
+            displayLanguages(data.languages);
+            displayProjectMetrics(data.projectMetrics);
+            displayCodeAnalysis(data.codeAnalysis);
+            displayIssues(data);
+            results.classList.add('active');
+        }
+
+        function displayLanguages(languages) {
+            const bar = document.getElementById('languageBar');
+            const legend = document.getElementById('languageLegend');
+            let barHTML = '', legendHTML = '';
+            for (const [lang, data] of Object.entries(languages.breakdown)) {
+                const color = LANGUAGE_COLORS[lang] || '#8b949e';
+                if (data.percentage >= 1) {
+                    barHTML += `<div style="width: ${data.percentage}%; background: ${color}"></div>`;
+                    legendHTML += `<div class="legend-item"><div class="legend-color" style="background: ${color}"></div><span>${lang} ${data.percentage}%</span></div>`;
+                }
+            }
+            bar.innerHTML = barHTML;
+            legend.innerHTML = legendHTML;
+        }
+
+        function displayProjectMetrics(metrics) {
+            const items = [
+                { label: 'README', value: metrics.hasReadme ? `✓ ${metrics.readmeQuality}%` : '✗', class: metrics.hasReadme && metrics.readmeQuality >= 60 ? 'good' : metrics.hasReadme ? 'warning' : 'bad' },
+                { label: 'Tests', value: metrics.hasTests ? '✓' : '✗', class: metrics.hasTests ? 'good' : 'warning' },
+                { label: 'CI/CD', value: metrics.hasCI ? '✓' : '✗', class: metrics.hasCI ? 'good' : 'warning' },
+                { label: 'License', value: metrics.hasLicense ? '✓' : '✗', class: metrics.hasLicense ? 'good' : 'warning' },
+                { label: 'Package Manager', value: metrics.hasPackageManager ? '✓' : '✗', class: metrics.hasPackageManager ? 'good' : '' },
+                { label: 'Structure', value: `${metrics.structureScore}%`, class: metrics.structureScore >= 70 ? 'good' : metrics.structureScore >= 50 ? 'warning' : 'bad' }
+            ];
+            document.getElementById('projectMetrics').innerHTML = items.map(item => `<div class="metric"><div class="metric-label">${item.label}</div><div class="metric-value ${item.class}">${item.value}</div></div>`).join('');
+        }
+
+        function displayCodeAnalysis(analysis) {
+            const container = document.getElementById('codeAnalysis');
+            const section = document.getElementById('codeAnalysisSection');
+            if (!analysis.byLanguage || Object.keys(analysis.byLanguage).length === 0) { section.style.display = 'none'; return; }
+            section.style.display = 'block';
+            let html = '';
+            for (const [lang, data] of Object.entries(analysis.byLanguage)) {
+                const scoreClass = data.score >= 75 ? 'good' : data.score >= 50 ? 'warning' : 'bad';
+                html += `<div style="margin-bottom: 24px;"><h3 style="margin-bottom: 12px; display: flex; justify-content: space-between;"><span>${lang}</span><span class="${scoreClass}">${data.score}/100</span></h3><div class="grid"><div class="metric"><div class="metric-label">Files</div><div class="metric-value">${data.filesAnalyzed || 0}</div></div><div class="metric"><div class="metric-label">Avg Complexity</div><div class="metric-value ${data.complexity?.average <= 10 ? 'good' : data.complexity?.average <= 15 ? 'warning' : 'bad'}">${data.complexity?.average || 'N/A'}</div></div><div class="metric"><div class="metric-label">Code Lines</div><div class="metric-value">${data.metrics?.codeLines?.toLocaleString() || 0}</div></div><div class="metric"><div class="metric-label">Functions</div><div class="metric-value">${(data.metrics?.functions || 0) + (data.metrics?.arrowFunctions || 0)}</div></div></div>${data.highlights?.length ? `<div style="margin-top: 12px;">${data.highlights.map(h => `<span class="tag good" style="margin-right: 8px; margin-bottom: 8px; display: inline-block;">✓ ${h}</span>`).join('')}</div>` : ''}</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function displayIssues(data) {
+            const container = document.getElementById('issuesList');
+            const section = document.getElementById('issuesSection');
+            const allIssues = [];
+            if (data.codeAnalysis?.byLanguage) {
+                for (const [lang, analysis] of Object.entries(data.codeAnalysis.byLanguage)) {
+                    if (analysis.issues) allIssues.push(...analysis.issues.map(i => ({ ...i, language: lang })));
+                    if (analysis.style?.issues) allIssues.push(...analysis.style.issues.map(i => ({ ...i, language: lang })));
+                }
+            }
+            if (allIssues.length === 0) { section.style.display = 'none'; return; }
+            section.style.display = 'block';
+            const severityOrder = { high: 0, medium: 1, low: 2, info: 3 };
+            allIssues.sort((a, b) => (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3));
+            container.innerHTML = allIssues.slice(0, 15).map(issue => `<li class="issue-item"><span class="issue-severity ${issue.severity || 'low'}">${issue.severity || 'info'}</span><div class="issue-content"><div class="issue-message">${issue.message}</div><div class="issue-file">${issue.file || ''}${issue.line ? `:${issue.line}` : ''} ${issue.language ? `(${issue.language})` : ''}</div></div></li>`).join('');
+        }
+
+        document.getElementById('repoUrl').addEventListener('keypress', (e) => { if (e.key === 'Enter') analyzeRepo(); });
+    </script>
+</body>
+</html>
