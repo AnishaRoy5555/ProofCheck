@@ -1,0 +1,19 @@
+{
+  "name": "proof-check",
+  "version": "1.0.0",
+  "description": "GitHub repository skill verification tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["github", "code-quality", "analyzer", "skill-verification"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "simple-git": "^3.30.0",
+    "uuid": "^13.0.0"
+  }
+}
