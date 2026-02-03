@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Temp directory (downloaded repos)
+temp/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+
+# Coverage
+coverage/
+.nyc_output/
