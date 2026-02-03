@@ -1,14 +1,16 @@
-FROM node:18
-
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+FROM node:18-slim
 
 WORKDIR /app
 
+# Create temp directory for downloaded repos
+RUN mkdir -p temp
+
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production
 
 COPY . .
 
-EXPOSE 8080
+# Expose port (Railway uses PORT env var)
+EXPOSE 3001
 
 CMD ["node", "server.js"]
